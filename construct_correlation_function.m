@@ -1,12 +1,12 @@
-function [correlation_function] = construct_correlation_function(Lv, Lh, signal, type)
+function [correlation_function] = construct_correlation_function(Lv, Lh, signal, type, angle)
 % Obs: of course it is possible to implement this function using meshgrids
 % instead of for loops. However, for large dimension models, meshgrid uses
 % too much RAM memory.
 % Lv - Vertical correlation range
 % Lh - Horizontal correlation range
 % signal - It is just to define the size of the simulations (FFTMA works better if we define the filter with the same size of the white noise)
-% type - Variogram/correlagram type, 1 for exponential, 2 for Gaussian and 3 for spherical
-
+% type - 1 for Gaussian, 1 for exponential and 3 for spherical
+% angle - Used for anisotropic spherical models
 
 I = size(signal,1);
 J= size(signal,2);
@@ -20,27 +20,40 @@ correlation_function = zeros(I,J,K);
 for i=1:I
     for j=1:J
         for k=1:K
-             
-            if type==1
-                value = exp( -sqrt((((i-round(I/2))^2)/Lv^2) + (((j-round(J/2))^2)/Lh^2) + (((k-round(K/2))^2)/Lh^2) ));                
+            
+            x = (i-round(I/2));
+            y = (j-round(J/2));
+            theta = atand(y/x);
+            a = 1 / sqrt( sind( angle-theta )^2 * Lh^-2 + cosd( angle-theta )^2 * Lv^-2 );
+            
+            h = sqrt( ( x )^2 + ( y )^2 + ((k-round(K/2)))^2);
+            h = h/a;
+            
+            if type=='gau'
+                h = h*3;
+                value = exp( -h.^2  );
             end
-            if type==2
-                value = exp( -((((i-round(I/2))^2)/Lv^2) + (((j-round(J/2))^2)/Lh^2) + (((k-round(K/2))^2)/Lh^2) )); 
+            if type=='exp'
+                h = h*3;
+                value = exp( -h );
             end
-            if type==3
-                r = sqrt( ((i-round(I/2))/(3*Lv))^2 + ((j-round(J/2))/(3*Lh))^2 + ((k-round(K/2))/(3*2*Lh))^2);
-                if r<1
-                    value = 1 - 1.5 * r + 0.5 * r^3;
+            
+            if type=='sph'
+                if h<=1
+                    value = 1 - 1.5 * h + 0.5 * h^3;
                 else
                     value=0;
                 end
             end
             
-            value_window = exp( -(abs((i-round(I/2))/(desvio*I))^order + abs((j-round(J/2))/(desvio*J))^order  + abs((k-round(K/2))/(desvio*K))^order));
+            % taper to avoid FFT artefacts:
+            value_window = exp( -(abs((i-round(I/2))/(desvio*I))^order + abs((j-round(J/2))/(desvio*J))^order  + abs((k-round(K/2))/(desvio*K))^order));            
             correlation_function(i,j,k) = value*value_window;
             %correlation_function(i,j,k) = value;
             
         end
     end
 end
+
+correlation_function(round(I/2),round(J/2),round(K/2)) = 1;
 

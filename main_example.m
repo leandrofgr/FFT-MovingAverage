@@ -16,13 +16,13 @@ J = 100;
 
 noise = randn(I,J);
 
-[correlation_function_exp] = construct_correlation_function(10, 10, noise, 1);
+[correlation_function_exp] = construct_correlation_function(10, 30, noise, 'exp', 0);
 [ simulation_exp ] = FFT_MA_3D( correlation_function_exp, noise );
 
-[correlation_function_gau] = construct_correlation_function(10, 10, noise, 2);
+[correlation_function_gau] = construct_correlation_function(10, 30, noise, 'gau', 30);
 [ simulation_gau ] = FFT_MA_3D( correlation_function_gau, noise );
 
-[correlation_function_sph] = construct_correlation_function(10, 10, noise, 3);
+[correlation_function_sph] = construct_correlation_function(10, 30, noise, 'sph', 60);
 [ simulation_sph ] = FFT_MA_3D( correlation_function_sph, noise );
 
 
@@ -48,7 +48,7 @@ I = 2 * size(mean_model,1);
 J = 1.5 * size(mean_model,2);
 
 noise = randn(I,J);
-[correlation_function_sph] = construct_correlation_function(10, 10, noise, 3);
+[correlation_function_sph] = construct_correlation_function(30, 30, noise, 'sph', 0);
 [ simulation_sph ] = FFT_MA_3D( correlation_function_sph, noise );
 
 % croping the simulation to avoid periodicity
